@@ -1,6 +1,7 @@
 const Movie = require('../models/movie');
 const NotFoundError = require('../Errors/NotFoundError');
 const RequestError = require('../Errors/RequestError');
+const ForbiddenError = require('../Errors/ForbiddenError');
 
 module.exports.getMovie = (req, res, next) => {
   Movie.find({})
@@ -43,7 +44,7 @@ module.exports.deleteMovie = (req, res, next) => {
               res.send({ data: movies });
             });
         } else {
-          throw new RequestError('Вы не можете удалить чужую карточку');
+          throw new ForbiddenError('Вы не можете удалить чужую карточку');
         }
       } else {
         throw new NotFoundError('Карточка с указанным _id не найдена.');
