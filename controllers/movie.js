@@ -4,7 +4,8 @@ const RequestError = require('../Errors/RequestError');
 const ForbiddenError = require('../Errors/ForbiddenError');
 
 module.exports.getMovie = (req, res, next) => {
-  Movie.find({})
+  console.log(req.user._id);
+  Movie.find({ owner: req.user._id })
     .then((movie) => {
       res.send({ data: movie });
     })
@@ -19,11 +20,24 @@ module.exports.createMovie = (req, res, next) => {
     image, trailer, nameRU, nameEN, thumbnail, movieId,
   } = req.body;
   const owner = req.user._id;
+
   Movie.create({
     country, director, duration, year, description, image, trailer, nameRU, nameEN, thumbnail, movieId, owner,
   })
     .then((movie) => {
-      res.send({ data: movie });
+      res.send({
+        country: movie.country,
+        director: movie.director,
+        duration: movie.duration,
+        year: movie.year,
+        description: movie.description,
+        image: movie.image,
+        trailer: movie.trailer,
+        nameRU: movie.nameRU,
+        nameEN: movie.nameEN,
+        thumbnail: movie.thumbnail,
+        movieId: movie.movieId,
+      });
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
@@ -35,13 +49,25 @@ module.exports.createMovie = (req, res, next) => {
 };
 
 module.exports.deleteMovie = (req, res, next) => {
-  Movie.findById(req.params.movieId)
+  Movie.findById(req.params.movieId).select('+owner')
     .then((movie) => {
       if (movie) {
         if (movie.owner.toString() === req.user._id.toString()) {
           Movie.findByIdAndRemove(req.params.movieId)
             .then((movies) => {
-              res.send({ data: movies });
+              res.send({
+                country: movies.country,
+                director: movies.director,
+                duration: movies.duration,
+                year: movies.year,
+                description: movies.description,
+                image: movies.image,
+                trailer: movies.trailer,
+                nameRU: movies.nameRU,
+                nameEN: movies.nameEN,
+                thumbnail: movies.thumbnail,
+                movieId: movies.movieId,
+              });
             });
         } else {
           throw new ForbiddenError('Вы не можете удалить чужую карточку');

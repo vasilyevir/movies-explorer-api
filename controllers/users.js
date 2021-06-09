@@ -4,7 +4,6 @@ const Users = require('../models/users');
 const NotFoundError = require('../Errors/NotFoundError');
 const EmailRepeatError = require('../Errors/EmailRepeatError');
 const RequestError = require('../Errors/RequestError');
-const AuthError = require('../Errors/AuthError');
 
 const { NODE_ENV, JWT_SECRET } = process.env;
 
@@ -100,7 +99,6 @@ module.exports.updateProfile = (req, res, next) => {
         });
     })
     .catch((err) => {
-      // console.log(1);
       next(err);
     });
 };
@@ -116,6 +114,6 @@ module.exports.login = (req, res, next) => {
       });
     })
     .catch((err) => {
-      next(new AuthError('Неправильные почта или пароль'));
+      next(err);
     });
 };
