@@ -40,7 +40,7 @@ app.use(errorLogger);
 
 app.use(errors());
 
-app.use((err, req, res, next) => { errorLog(err, req, res, next); });
+app.use(errorLog);
 
 async function main() {
   await mongoose.connect(MongoUrl, {
