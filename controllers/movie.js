@@ -25,6 +25,7 @@ module.exports.createMovie = (req, res, next) => {
   })
     .then((movie) => {
       res.send({
+        _id: movie._id,
         country: movie.country,
         director: movie.director,
         duration: movie.duration,

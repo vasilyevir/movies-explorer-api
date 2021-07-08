@@ -66,41 +66,64 @@ module.exports.createUser = (req, res, next) => {
 };
 
 module.exports.updateProfile = (req, res, next) => {
-  const { name, email } = req.body;
+  const { name, email, emailChanged } = req.body;
   if (name === undefined || email === undefined) {
     throw new RequestError('Передайте корректные данные.');
   }
+  if (!emailChanged) {
+    Users.findOne({ email: `${email}` })
+      .then((user) => {
+        if (user) {
+          throw new EmailRepeatError('Пользователь с таким email уже существует.');
+        }
+        Users.findByIdAndUpdate(req.user._id,
+          { name, email },
+          {
+            new: true,
+            runValidators: true,
+          })
+          .then((users) => {
+            if (users) {
+              res.send({ data: users });
+            } else {
+              throw new NotFoundError('Пользователь по указанному _id не найден.');
+            }
+          })
+          .catch((err) => {
+            if (err.name === 'ValidationError') {
+              next(new RequestError('Переданы некорректные данные при обновлении пользователя.'));
+              return;
+            }
 
-  Users.findOne({ email: `${email}` })
-    .then((user) => {
-      if (user) {
-        throw new EmailRepeatError('Пользователь с таким email уже существует.');
-      }
-      Users.findByIdAndUpdate(req.user._id,
-        { name, email },
-        {
-          new: true,
-          runValidators: true,
-        })
-        .then((users) => {
-          if (users) {
-            res.send({ data: users });
-          } else {
-            throw new NotFoundError('Пользователь по указанному _id не найден.');
-          }
-        })
-        .catch((err) => {
-          if (err.name === 'ValidationError') {
-            next(new RequestError('Переданы некорректные данные при обновлении пользователя.'));
-            return;
-          }
+            next(err);
+          });
+      })
+      .catch((err) => {
+        next(err);
+      });
+  } else {
+    Users.findByIdAndUpdate(req.user._id,
+      { name, email },
+      {
+        new: true,
+        runValidators: true,
+      })
+      .then((users) => {
+        if (users) {
+          res.send({ data: users });
+        } else {
+          throw new NotFoundError('Пользователь по указанному _id не найден.');
+        }
+      })
+      .catch((err) => {
+        if (err.name === 'ValidationError') {
+          next(new RequestError('Переданы некорректные данные при обновлении пользователя.'));
+          return;
+        }
 
-          next(err);
-        });
-    })
-    .catch((err) => {
-      next(err);
-    });
+        next(err);
+      });
+  }
 };
 
 module.exports.login = (req, res, next) => {
@@ -108,7 +131,6 @@ module.exports.login = (req, res, next) => {
 
   return Users.findUserByCredentials(email, password)
     .then((user) => {
-      console.log(user);
       res.send({
         token: jwt.sign({ _id: user._id }, NODE_ENV === 'production' ? JWT_SECRET : 'dev-secret', { expiresIn: '7d' }),
       });
